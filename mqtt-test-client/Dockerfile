@@ -3,13 +3,12 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy requirements and install dependencies
-COPY requirements.txt .
+COPY mqtt-test-client/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY test_client.py .
+COPY mqtt-test-client/test_client.py .
 
-# Copy test data directory
-COPY ../test-data /app/test-data
+# Note: test-data directory is mounted as a volume in docker-compose.yml
 
 CMD ["python", "test_client.py"]
