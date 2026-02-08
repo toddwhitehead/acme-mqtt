@@ -4,7 +4,6 @@ Unit tests for Event Grid handler logic
 
 import json
 import sys
-import os
 from datetime import datetime, timezone
 
 
