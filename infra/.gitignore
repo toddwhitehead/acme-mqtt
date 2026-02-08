@@ -1,0 +1,20 @@
+# Bicep build artifacts
+*.json.log
+
+# Azure deployment artifacts
+*.deployment
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local configuration
+.env.local
+*.local.json

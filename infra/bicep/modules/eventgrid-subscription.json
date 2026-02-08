@@ -1,0 +1,77 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.40.2.10011",
+      "templateHash": "11847100886044911193"
+    }
+  },
+  "parameters": {
+    "subscriptionName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Event Grid subscription"
+      }
+    },
+    "topicName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Event Grid topic"
+      }
+    },
+    "functionAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the function app"
+      }
+    },
+    "functionName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the function"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.EventGrid/eventSubscriptions",
+      "apiVersion": "2023-12-15-preview",
+      "scope": "[resourceId('Microsoft.EventGrid/topics', parameters('topicName'))]",
+      "name": "[parameters('subscriptionName')]",
+      "properties": {
+        "destination": {
+          "endpointType": "AzureFunction",
+          "properties": {
+            "resourceId": "[format('{0}/functions/{1}', resourceId('Microsoft.Web/sites', parameters('functionAppName')), parameters('functionName'))]",
+            "maxEventsPerBatch": 1,
+            "preferredBatchSizeInKilobytes": 64
+          }
+        },
+        "filter": {
+          "includedEventTypes": [
+            "Microsoft.EventGrid.SubscriptionValidationEvent",
+            "Microsoft.EventGrid.SubscriptionDeletedEvent"
+          ],
+          "enableAdvancedFilteringOnArrays": true
+        },
+        "eventDeliverySchema": "EventGridSchema",
+        "retryPolicy": {
+          "maxDeliveryAttempts": 30,
+          "eventTimeToLiveInMinutes": 1440
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "subscriptionName": {
+      "type": "string",
+      "value": "[parameters('subscriptionName')]"
+    },
+    "subscriptionId": {
+      "type": "string",
+      "value": "[extensionResourceId(resourceId('Microsoft.EventGrid/topics', parameters('topicName')), 'Microsoft.EventGrid/eventSubscriptions', parameters('subscriptionName'))]"
+    }
+  }
+}
