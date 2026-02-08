@@ -109,7 +109,7 @@ Edit `.env` and add your Azure Event Grid MQTT credentials:
 
 ```env
 # For SAS token authentication
-EVENTGRID_MQTT_HOSTNAME=<your-namespace>.westus2.ts.eventgrid.azure.net
+EVENTGRID_MQTT_HOSTNAME=<your-namespace>.<region>.ts.eventgrid.azure.net
 MQTT_CLIENT_ID=mqtt_proxy
 MQTT_USERNAME=mqtt_proxy
 MQTT_PASSWORD=<your-sas-token>

@@ -63,7 +63,7 @@ def init_eventgrid_mqtt_client():
                 certfile=MQTT_CERT_FILE,
                 keyfile=MQTT_KEY_FILE,
                 cert_reqs=ssl.CERT_REQUIRED,
-                tls_version=ssl.PROTOCOL_TLS
+                tls_version=ssl.PROTOCOL_TLS_CLIENT
             )
         else:
             # SAS token authentication
@@ -71,7 +71,7 @@ def init_eventgrid_mqtt_client():
             if MQTT_USERNAME and MQTT_PASSWORD:
                 eventgrid_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
             # Set up TLS without client certificates
-            eventgrid_client.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS)
+            eventgrid_client.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLS_CLIENT)
         
         # Set callbacks
         eventgrid_client.on_connect = on_eventgrid_connect
