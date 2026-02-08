@@ -113,19 +113,29 @@ def main(event: func.EventGridEvent):
                         logging.info(f"Successfully appended event to {blob_name}. Total events: {len(events_list)}")
                         success = True
                         
-                    except (ResourceModifiedError, Exception) as e:
-                        # If ETag mismatch or other upload error, retry
-                        if 'ConditionNotMet' in str(e) or isinstance(e, ResourceModifiedError):
+                    except ResourceModifiedError as e:
+                        # ETag mismatch - retry with backoff
+                        retry_count += 1
+                        if retry_count < max_retries:
+                            wait_time = (2 ** retry_count) * 0.1  # Exponential backoff: 0.2s, 0.4s, 0.8s, 1.6s
+                            logging.warning(f"Concurrent modification detected, retrying in {wait_time}s (attempt {retry_count}/{max_retries})")
+                            time.sleep(wait_time)
+                        else:
+                            logging.error(f"Failed to upload after {max_retries} retries due to concurrent modifications")
+                            raise
+                    except Exception as e:
+                        # Check if it's a condition not met error (alternative way Azure SDK reports ETag mismatch)
+                        if 'ConditionNotMet' in str(e):
                             retry_count += 1
                             if retry_count < max_retries:
-                                wait_time = (2 ** retry_count) * 0.1  # Exponential backoff: 0.2s, 0.4s, 0.8s, 1.6s
+                                wait_time = (2 ** retry_count) * 0.1  # Exponential backoff
                                 logging.warning(f"Concurrent modification detected, retrying in {wait_time}s (attempt {retry_count}/{max_retries})")
                                 time.sleep(wait_time)
                             else:
                                 logging.error(f"Failed to upload after {max_retries} retries due to concurrent modifications")
                                 raise
                         else:
-                            # Re-raise other exceptions immediately
+                            # Other exceptions should not be retried
                             raise
                 
             except Exception as e:
