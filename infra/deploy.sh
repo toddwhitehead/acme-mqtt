@@ -60,7 +60,7 @@ usage() {
     echo "Options:"
     echo "  -e, --environment ENV    Environment name (dev, staging, prod). Default: dev"
     echo "  -r, --resource-group RG  Resource group name. Default: acme-mqtt-<environment>-rg"
-    echo "  -l, --location LOC       Azure region. Default: westus2"
+    echo "  -l, --location LOC       Azure region. Default: australiaeast"
     echo "  -s, --subscription ID    Azure subscription ID (optional)"
     echo "  -h, --help               Display this help message"
     echo ""
@@ -71,7 +71,7 @@ usage() {
 
 # Default values
 ENVIRONMENT="dev"
-LOCATION="westus2"
+LOCATION="australiaeast"
 RESOURCE_GROUP=""
 SUBSCRIPTION_ID=""
 
@@ -240,11 +240,9 @@ if [ $? -eq 0 ]; then
     log_info "Next Steps"
     log_info "==================================="
     log_info "1. Generate a SAS token for MQTT client authentication:"
-    log_info "   az eventgrid namespace client generate-sas-token \\"
-    log_info "     --resource-group $RESOURCE_GROUP \\"
-    log_info "     --namespace-name \$(az eventgrid namespace list -g $RESOURCE_GROUP --query '[0].name' -o tsv) \\"
-    log_info "     --client-name mqtt-proxy \\"
-    log_info "     --expiry-time-utc \"2025-12-31T23:59:59Z\""
+    log_info "   Run the PowerShell SAS generator script:"
+    log_info "     cd bicep && pwsh ./generate-sas-mqtt.ps1"
+    log_info "   Or use the Azure REST API directly (see infra/README.md)"
     echo ""
     log_info "2. Update your .env file with the following values:"
     log_info "   EVENTGRID_MQTT_HOSTNAME=$EVENTGRID_HOSTNAME"

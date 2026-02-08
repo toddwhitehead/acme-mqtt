@@ -6,105 +6,145 @@ This directory contains Infrastructure as Code (IaC) templates and scripts to pr
 
 The infrastructure consists of the following Azure resources:
 
-1. **Event Grid Namespace** - With MQTT broker enabled for IoT device connectivity
-2. **Storage Account** - For storing MQTT message data in blob containers
-3. **Function App** - Serverless function triggered by Event Grid events
-4. **Event Grid Topic** - For routing MQTT messages to the Function App
-5. **Event Grid Subscription** - Connects the topic to the Function App
+| Resource | SKU / Tier | Purpose |
+|---|---|---|
+| **Event Grid Namespace** | Standard (1 CU) | MQTT broker for IoT device connectivity |
+| **Storage Account** | Standard LRS | Blob storage for MQTT message data |
+| **Function App** | Consumption (Y1) | Serverless event processing (pay-per-execution) |
+| **Event Grid Topic** | Basic | Routes MQTT messages to the Function App |
+| **Event Grid Subscription** | — | Connects the topic to the Function App (optional) |
 
 ## Prerequisites
 
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (version 2.50.0 or later)
-- An active Azure subscription
-- Appropriate permissions to create resources in Azure
-- `jq` command-line JSON processor (for parsing deployment outputs)
-
-### Install Azure CLI
-
-**Linux/macOS:**
-```bash
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-```
-
-**Windows:**
-Download and install from: https://aka.ms/installazurecliwindows
-
-### Login to Azure
-
-```bash
-az login
-```
-
-To use a specific subscription:
-```bash
-az account set --subscription "<subscription-id>"
-```
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) v2.50.0+
+- An active Azure subscription with Contributor/Owner role
+- [Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local) v4 (for deploying the function)
 
 ## Quick Start
 
-### 1. Deploy Infrastructure
+### 1. Login to Azure
 
-Deploy the development environment:
+```bash
+az login
+az account set --subscription "<subscription-id>"
+```
 
+### 2. Deploy Infrastructure
+
+**Bash:**
 ```bash
 cd infra
-./deploy.sh --environment dev
+chmod +x deploy.sh
+./deploy.sh --environment dev --location australiaeast
 ```
 
-Deploy to a custom resource group and location:
+**PowerShell:**
+```powershell
+cd infra
+.\deploy.ps1 -Environment dev -Location australiaeast
+```
 
+To deploy into an existing resource group:
+
+**Bash:**
 ```bash
-./deploy.sh \
-  --environment prod \
-  --resource-group my-custom-rg \
-  --location eastus
+./deploy.sh --environment dev --resource-group sandpit-todd --location australiaeast
 ```
 
-### 2. Configure Environment Variables
+**PowerShell:**
+```powershell
+.\deploy.ps1 -Environment dev -ResourceGroup sandpit-todd -Location australiaeast
+```
 
-After deployment completes, generate a SAS token for MQTT authentication:
+### 3. Generate a SAS Token for MQTT Authentication
 
+The `az eventgrid namespace` CLI commands require a preview extension that may not install cleanly. A PowerShell helper script is provided that calls the ARM REST API directly.
+
+**PowerShell (recommended):**
+```powershell
+cd infra/bicep
+.\generate-sas-mqtt.ps1
+```
+
+Edit the variables at the top of the script to match your deployment (resource group, namespace name, client name, expiry).
+
+**Bash (using curl + REST API):**
 ```bash
-# Get the Event Grid namespace name
-NAMESPACE_NAME=$(az eventgrid namespace list \
-  --resource-group acme-mqtt-dev-rg \
-  --query '[0].name' -o tsv)
+SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+TOKEN=$(az account get-access-token --query accessToken -o tsv)
+RESOURCE_GROUP="sandpit-todd"
+NAMESPACE_NAME="acme-mqtt-dev-egns"
 
-# Generate SAS token (valid until 2025-12-31)
-az eventgrid namespace client generate-sas-token \
-  --resource-group acme-mqtt-dev-rg \
-  --namespace-name $NAMESPACE_NAME \
-  --client-name mqtt-proxy \
-  --expiry-time-utc "2025-12-31T23:59:59Z"
+# Fetch namespace shared key
+KEY=$(curl -s -X POST \
+  "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.EventGrid/namespaces/$NAMESPACE_NAME/listKeys?api-version=2024-06-01-preview" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" | jq -r '.key1')
+
+echo "Shared key retrieved. Use it to build a SAS token or pass it to your MQTT client."
 ```
 
-Update your `.env` file in the project root with the generated values:
+> **Note:** The full SAS token construction in Bash requires HMAC-SHA256 signing. Use the PowerShell script or build the token in Python/Node if you need a complete SAS string from Bash.
+
+### 4. Update the .env File
+
+After generating the SAS token, update `.env` in the project root:
 
 ```env
-EVENTGRID_MQTT_HOSTNAME=<your-namespace>.<region>.ts.eventgrid.azure.net
+EVENTGRID_MQTT_HOSTNAME=<namespace-name>.<region>-1.eventgrid.azure.net
 MQTT_CLIENT_ID=mqtt-proxy
 MQTT_USERNAME=mqtt-proxy
-MQTT_PASSWORD=<sas-token-from-above>
+MQTT_PASSWORD=SharedAccessSignature sr=...
 ```
 
-### 3. Deploy the Azure Function
+### 5. Deploy the Azure Function
 
+**Bash / PowerShell:**
 ```bash
-cd ../azure-function
-
-# Install Azure Functions Core Tools if not already installed
-npm install -g azure-functions-core-tools@4
-
-# Deploy the function
-func azure functionapp publish <function-app-name>
+cd azure-function
+func azure functionapp publish <function-app-name> --python
 ```
 
-Replace `<function-app-name>` with the name from deployment outputs.
+Replace `<function-app-name>` with the value from the deployment outputs (e.g. `acme-mqtt-dev-func-zie5`).
 
-### 4. Start On-Premises Services
+If you don't have `func` on your PATH:
+
+| Platform | Install Command |
+|---|---|
+| Windows (winget) | `winget install Microsoft.Azure.FunctionsCoreTools` |
+| macOS (brew) | `brew tap azure/functions && brew install azure-functions-core-tools@4` |
+| npm | `npm install -g azure-functions-core-tools@4` |
+
+> On Windows, if `func` is not found after install, add it to PATH: `$env:PATH += ";C:\Program Files\Microsoft\Azure Functions Core Tools"`
+
+### 6. (Optional) Deploy the Event Grid Subscription
+
+The Event Grid subscription that connects the topic to the Function App is **not** deployed by default — the function code must be published first.
+
+**Bash:**
+```bash
+./deploy.sh --environment dev --resource-group sandpit-todd --location australiaeast
+# When prompted, the same template is re-applied. Override the parameter:
+# Or run directly:
+az deployment group create \
+  --resource-group sandpit-todd \
+  --template-file bicep/main.bicep \
+  --parameters bicep/parameters.dev.json \
+  --parameters deployEventGridSubscription=true location=australiaeast
+```
+
+**PowerShell:**
+```powershell
+az deployment group create `
+  --resource-group sandpit-todd `
+  --template-file bicep/main.bicep `
+  --parameters bicep/parameters.dev.json `
+  --parameters deployEventGridSubscription=true location=australiaeast
+```
+
+### 7. Start On-Premises Services
 
 ```bash
-cd ..
 docker-compose up -d
 ```
 
@@ -113,324 +153,165 @@ docker-compose up -d
 ```
 infra/
 ├── bicep/
-│   ├── main.bicep                        # Main Bicep template
+│   ├── main.bicep                        # Main orchestration template
 │   ├── parameters.dev.json               # Development parameters
 │   ├── parameters.prod.json              # Production parameters
+│   ├── generate-sas-mqtt.ps1             # SAS token generator (REST API)
 │   └── modules/
-│       ├── eventgrid-namespace.bicep     # Event Grid namespace with MQTT
-│       ├── storage-account.bicep         # Storage account
-│       ├── function-app.bicep            # Function app with consumption plan
+│       ├── eventgrid-namespace.bicep     # Event Grid namespace + MQTT broker
 │       ├── eventgrid-topic.bicep         # Event Grid topic
-│       └── eventgrid-subscription.bicep  # Event Grid subscription
-├── deploy.sh                             # Deployment script
-├── cleanup.sh                            # Cleanup script
+│       ├── eventgrid-subscription.bicep  # Event Grid subscription
+│       ├── function-app.bicep            # Function App (Consumption plan)
+│       └── storage-account.bicep         # Storage account
+├── deploy.sh                             # Bash deployment script
+├── deploy.ps1                            # PowerShell deployment script
+├── cleanup.sh                            # Bash cleanup script
 └── README.md                             # This file
 ```
 
 ## Deployment Scripts
 
-### deploy.sh
+### deploy.ps1 (PowerShell)
 
-Deploys the complete Azure infrastructure using Bicep templates.
+```
+.\deploy.ps1 [OPTIONS]
 
-**Usage:**
-```bash
+  -Environment ENV       dev | staging | prod (default: dev)
+  -ResourceGroup RG      Resource group name (default: acme-mqtt-<env>-rg)
+  -Location LOC          Azure region (default: australiaeast)
+  -SubscriptionId ID     Azure subscription ID
+  -Help                  Display help
+```
+
+### deploy.sh (Bash)
+
+```
 ./deploy.sh [OPTIONS]
 
-Options:
-  -e, --environment ENV    Environment name (dev, staging, prod). Default: dev
-  -r, --resource-group RG  Resource group name. Default: acme-mqtt-<environment>-rg
-  -l, --location LOC       Azure region. Default: westus2
-  -s, --subscription ID    Azure subscription ID (optional)
-  -h, --help               Display help message
+  -e, --environment ENV    dev | staging | prod (default: dev)
+  -r, --resource-group RG  Resource group name (default: acme-mqtt-<env>-rg)
+  -l, --location LOC       Azure region (default: australiaeast)
+  -s, --subscription ID    Azure subscription ID
+  -h, --help               Display help
 ```
 
-**Examples:**
-```bash
-# Deploy to development environment (default)
-./deploy.sh
+### cleanup.sh (Bash)
 
-# Deploy to production with custom resource group
-./deploy.sh --environment prod --resource-group acme-mqtt-prod-rg
-
-# Deploy to a specific Azure region
-./deploy.sh --environment staging --location eastus2
-
-# Deploy using a specific subscription
-./deploy.sh --subscription "00000000-0000-0000-0000-000000000000"
 ```
-
-### cleanup.sh
-
-Deletes the resource group and all resources within it.
-
-**Usage:**
-```bash
 ./cleanup.sh [OPTIONS]
 
-Options:
-  -e, --environment ENV    Environment name (dev, staging, prod). Default: dev
-  -r, --resource-group RG  Resource group name. Default: acme-mqtt-<environment>-rg
-  -s, --subscription ID    Azure subscription ID (optional)
+  -e, --environment ENV    dev | staging | prod (default: dev)
+  -r, --resource-group RG  Resource group name
+  -s, --subscription ID    Azure subscription ID
   -f, --force              Skip confirmation prompt
-  -h, --help               Display help message
-```
-
-**Examples:**
-```bash
-# Delete development environment (with confirmation)
-./cleanup.sh
-
-# Force delete without confirmation
-./cleanup.sh --environment dev --force
-
-# Delete custom resource group
-./cleanup.sh --resource-group my-custom-rg
+  -h, --help               Display help
 ```
 
 ## Bicep Templates
 
 ### main.bicep
 
-The main template orchestrates the deployment of all resources. It uses modular approach with separate modules for each resource type.
+Orchestrates deployment of all modules.
 
-**Parameters:**
-- `location` - Azure region (default: resource group location)
-- `environmentName` - Environment name: dev, staging, or prod (default: dev)
-- `projectName` - Base name for resources (default: acme-mqtt)
-- `eventGridNamespaceName` - Event Grid namespace name
-- `storageAccountName` - Storage account name (must be globally unique)
-- `functionAppName` - Function app name
-- `eventGridTopicName` - Event Grid topic name
-- `mqttClientId` - MQTT client ID (default: mqtt-proxy)
+**Key Parameters:**
+
+| Parameter | Default | Description |
+|---|---|---|
+| `location` | resource group location | Azure region |
+| `environmentName` | `dev` | Environment: dev, staging, prod |
+| `projectName` | `acme-mqtt` | Base name for resources |
+| `mqttClientId` | `mqtt-proxy` | MQTT client ID registered in Event Grid |
+| `deployEventGridSubscription` | `false` | Deploy Event Grid subscription to Function App |
 
 **Outputs:**
-- `eventGridNamespaceName` - Name of the Event Grid namespace
-- `eventGridNamespaceHostname` - MQTT broker hostname
-- `storageAccountName` - Name of the storage account
-- `functionAppName` - Name of the function app
-- `eventGridTopicName` - Name of the Event Grid topic
-- `eventGridTopicEndpoint` - Event Grid topic endpoint URL
-- `resourceGroupName` - Name of the resource group
 
-### Module Templates
+| Output | Description |
+|---|---|
+| `eventGridNamespaceName` | Event Grid namespace name |
+| `eventGridNamespaceHostname` | MQTT broker hostname |
+| `storageAccountName` | Storage account name |
+| `functionAppName` | Function App name |
+| `eventGridTopicName` | Event Grid topic name |
+| `eventGridTopicEndpoint` | Topic endpoint URL |
 
-Each module is responsible for a specific Azure resource:
+### Module Details
 
-1. **eventgrid-namespace.bicep** - Creates Event Grid namespace with:
-   - MQTT broker enabled
-   - MQTT client registration
-   - Topic space for sensor data
-   - Permission bindings for publish/subscribe
+1. **eventgrid-namespace.bicep** — Event Grid namespace with MQTT broker enabled, client registration with certificate authentication (`SubjectMatchesAuthenticationName`), topic space for `sensor/#`, and publish/subscribe permission bindings.
 
-2. **storage-account.bicep** - Creates Storage Account with:
-   - Standard LRS replication
-   - Blob container for MQTT data
-   - TLS 1.2 minimum version
-   - 7-day blob retention policy
+2. **storage-account.bicep** — Standard LRS storage with `mqtt-data` blob container, TLS 1.2 minimum, 7-day soft delete retention.
 
-3. **function-app.bicep** - Creates Function App with:
-   - Consumption (serverless) plan
-   - Python 3.11 runtime
-   - System-assigned managed identity
-   - Storage Blob Data Contributor role
+3. **function-app.bicep** — Linux Consumption plan (Y1/Dynamic), Python 3.11, system-assigned managed identity with Storage Blob Data Contributor role. Zero idle cost.
 
-4. **eventgrid-topic.bicep** - Creates Event Grid Topic with:
-   - Event Grid schema
-   - Public network access
+4. **eventgrid-topic.bicep** — Basic tier Event Grid topic with EventGridSchema.
 
-5. **eventgrid-subscription.bicep** - Creates Event Grid Subscription with:
-   - Azure Function endpoint
-   - Retry policy (30 attempts, 24h TTL)
-   - Event filtering
-
-## Parameters Files
-
-Parameter files allow you to customize the deployment for different environments:
-
-- `parameters.dev.json` - Development environment settings
-- `parameters.prod.json` - Production environment settings
-
-### Customizing Parameters
-
-Edit the appropriate parameters file to customize your deployment:
-
-```json
-{
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "environmentName": {
-      "value": "dev"
-    },
-    "projectName": {
-      "value": "acme-mqtt"
-    },
-    "location": {
-      "value": "westus2"
-    },
-    "mqttClientId": {
-      "value": "mqtt-proxy"
-    }
-  }
-}
-```
-
-## Manual Deployment
-
-If you prefer to deploy manually using Azure CLI:
-
-```bash
-# Create resource group
-az group create \
-  --name acme-mqtt-dev-rg \
-  --location westus2
-
-# Deploy Bicep template
-az deployment group create \
-  --name acme-mqtt-deployment \
-  --resource-group acme-mqtt-dev-rg \
-  --template-file bicep/main.bicep \
-  --parameters bicep/parameters.dev.json
-
-# View deployment outputs
-az deployment group show \
-  --name acme-mqtt-deployment \
-  --resource-group acme-mqtt-dev-rg \
-  --query properties.outputs
-```
-
-## Post-Deployment Configuration
-
-### 1. Generate MQTT Client SAS Token
-
-```bash
-az eventgrid namespace client generate-sas-token \
-  --resource-group acme-mqtt-dev-rg \
-  --namespace-name <namespace-name> \
-  --client-name mqtt-proxy \
-  --expiry-time-utc "2025-12-31T23:59:59Z"
-```
-
-### 2. Configure Function App Settings
-
-The following settings are automatically configured during deployment:
-- `AzureWebJobsStorage` - Storage connection string
-- `BLOB_CONTAINER_NAME` - mqtt-data
-- `FUNCTIONS_WORKER_RUNTIME` - python
-- `FUNCTIONS_EXTENSION_VERSION` - ~4
-
-### 3. Deploy Function Code
-
-```bash
-cd ../azure-function
-func azure functionapp publish <function-app-name>
-```
+5. **eventgrid-subscription.bicep** — Connects the topic to the Function App's `EventGridTrigger` endpoint with retry policy (30 attempts, 24h TTL).
 
 ## Cost Considerations
 
-The deployed infrastructure uses the following pricing tiers:
+| Resource | Estimated Monthly Cost (Dev) |
+|---|---|
+| Event Grid Namespace (Standard, 1 CU, no zone redundancy) | ~$10–20 |
+| Storage Account (Standard LRS) | ~$1–5 |
+| Function App (Consumption — pay per execution) | ~$0–5 (first 1M free) |
+| Event Grid Topic (Basic) | ~$0–5 |
+| **Total** | **~$12–35/month** |
 
-- **Event Grid Namespace**: Standard tier
-- **Storage Account**: Standard LRS (Locally Redundant Storage)
-- **Function App**: Consumption (pay-per-execution) plan
-- **Event Grid Topic**: Basic tier
-
-Estimated monthly costs (for development):
-- Event Grid Namespace: ~$10-20
-- Storage Account: ~$1-5 (depending on data volume)
-- Function App: ~$0-5 (consumption plan, first 1M executions free)
-- Event Grid Topic: ~$0-5
-
-**Total estimated cost: $12-35/month for light development usage**
-
-Production costs will vary based on:
-- Number of MQTT connections
-- Message volume
-- Data retention requirements
-- Geographic region
+Cost-saving measures applied:
+- Consumption plan (Y1) — zero cost when idle
+- Zone redundancy disabled on Event Grid namespace
+- Standard LRS storage (cheapest replication)
+- Basic tier Event Grid topic
 
 ## Troubleshooting
 
 ### Deployment Fails
 
-1. **Check Azure CLI version:**
-   ```bash
-   az --version
-   ```
-   Ensure you're using version 2.50.0 or later.
+```bash
+# Check CLI version (need 2.50.0+)
+az --version
 
-2. **Verify subscription permissions:**
-   ```bash
-   az account show
-   ```
-   Ensure you have Contributor or Owner role.
+# View deployment error details
+az deployment group show \
+  --name <deployment-name> \
+  --resource-group <resource-group> \
+  --query properties.error
+```
 
-3. **Check resource name availability:**
-   Storage account names must be globally unique. If deployment fails due to name conflict, modify the `storageAccountName` parameter.
+### Permission Binding Name Error
 
-4. **Review deployment logs:**
-   ```bash
-   az deployment group show \
-     --name <deployment-name> \
-     --resource-group <resource-group> \
-     --query properties.error
-   ```
+Event Grid permission binding names only allow letters, numbers, and hyphens. If your `mqttClientId` contains underscores, the template automatically converts them with `replace(mqttClientId, '_', '-')`.
 
-### MQTT Connection Issues
+### MQTT Client Authentication Error
 
-1. **Verify MQTT client is registered:**
-   ```bash
-   az eventgrid namespace client show \
-     --resource-group acme-mqtt-dev-rg \
-     --namespace-name <namespace-name> \
-     --client-name mqtt-proxy
-   ```
+The Event Grid client resource requires `clientCertificateAuthentication` with a valid `validationScheme`, even when using SAS tokens. This is configured in the template as `SubjectMatchesAuthenticationName`.
 
-2. **Check SAS token expiration:**
-   Generate a new token if expired.
+### SAS Token Generation
 
-3. **Verify hostname format:**
-   Should be: `<namespace>.<region>.ts.eventgrid.azure.net`
+The `az eventgrid namespace` CLI commands require a preview extension that has known pip install issues on Windows. Use the provided `generate-sas-mqtt.ps1` script instead, which calls the ARM REST API directly.
 
-### Function App Issues
+### Function App Deployment
 
-1. **Check function logs:**
-   ```bash
-   az functionapp log tail \
-     --name <function-app-name> \
-     --resource-group acme-mqtt-dev-rg
-   ```
+If `func` is not recognised, add it to PATH:
+```powershell
+$env:PATH += ";C:\Program Files\Microsoft\Azure Functions Core Tools"
+```
 
-2. **Verify Event Grid subscription:**
-   ```bash
-   az eventgrid event-subscription list \
-     --source-resource-id $(az eventgrid topic show \
-       --name <topic-name> \
-       --resource-group acme-mqtt-dev-rg \
-       --query id -o tsv)
-   ```
+### Function App Logs
+
+```bash
+az functionapp log tail \
+  --name <function-app-name> \
+  --resource-group <resource-group>
+```
 
 ## Security Best Practices
 
-1. **Use Managed Identities**: The Function App uses system-assigned managed identity to access Storage Account.
-
-2. **Enable HTTPS Only**: All resources are configured with HTTPS/TLS encryption.
-
-3. **Restrict Network Access**: Consider using Private Endpoints for production deployments.
-
-4. **Rotate SAS Tokens**: Regularly regenerate MQTT client SAS tokens.
-
-5. **Monitor Access**: Enable diagnostic logging for all resources.
-
-6. **Use Azure Key Vault**: Store sensitive configuration values in Key Vault (optional enhancement).
-
-## Support
-
-For issues or questions:
-1. Check the [main README](../README.md) for general project information
-2. Review the [Azure Event Grid documentation](https://docs.microsoft.com/en-us/azure/event-grid/)
-3. Review the [Azure Functions documentation](https://docs.microsoft.com/en-us/azure/azure-functions/)
+- **Managed Identity** — Function App uses system-assigned identity for storage access
+- **HTTPS Only** — All resources enforce TLS/HTTPS
+- **FTPS Disabled** — FTP access is disabled on the Function App
+- **TLS 1.2** — Minimum version enforced on storage and function app
+- **Rotate SAS Tokens** — Regenerate MQTT client tokens periodically
+- **Private Endpoints** — Consider adding for production deployments
 
 ## License
 
