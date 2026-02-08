@@ -89,9 +89,10 @@ def send_to_eventgrid(augmented_data):
     
     try:
         # Create CloudEvent
+        # Note: Customize event type and source for your organization
         event = CloudEvent(
-            type="AcmeMqtt.SensorData",
-            source="acme-mqtt-proxy",
+            type="MqttProxy.SensorData",
+            source="mqtt-proxy",
             data=augmented_data
         )
         

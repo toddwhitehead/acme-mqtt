@@ -5,7 +5,7 @@ Azure Function to receive Event Grid messages and store in Blob Storage
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import azure.functions as func
 from azure.storage.blob import BlobServiceClient
 
@@ -35,7 +35,7 @@ def main(event: func.EventGridEvent):
         logging.info(f"Event Time: {event_time}")
         
         # Create blob name based on timestamp
-        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')
         blob_name = f"mqtt-data_{timestamp}_{event_id}.json"
         
         # Prepare data to store
@@ -45,7 +45,7 @@ def main(event: func.EventGridEvent):
             'event_subject': event_subject,
             'event_time': str(event_time),
             'data': event_data,
-            'stored_at': datetime.utcnow().isoformat()
+            'stored_at': datetime.now(timezone.utc).isoformat()
         }
         
         # Store in blob storage
