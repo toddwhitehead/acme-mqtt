@@ -51,6 +51,10 @@ ENV/
 local.settings.json
 .azure/
 
+# Bicep generated ARM templates
+infra/bicep/**/*.json
+!infra/bicep/parameters.*.json
+
 # OS
 .DS_Store
 Thumbs.db

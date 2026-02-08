@@ -43,11 +43,83 @@ A Docker-based MQTT solution that bridges on-premises MQTT infrastructure with A
 
 - Docker and Docker Compose
 - Azure subscription
+- Azure CLI (for infrastructure deployment)
 - Azure Event Grid namespace with MQTT enabled
 - Azure Storage Account
 - Azure Function App
 
 ## Quick Start
+
+There are two ways to get started:
+- **Option A**: Use Infrastructure as Code (IaC) scripts for automated deployment (recommended)
+- **Option B**: Manual Azure resource setup
+
+### Option A: Automated Deployment with IaC (Recommended)
+
+#### 1. Clone the Repository
+
+```bash
+git clone https://github.com/toddwhitehead/acme-mqtt.git
+cd acme-mqtt
+```
+
+#### 2. Deploy Azure Infrastructure
+
+Use the provided Bicep templates and deployment scripts:
+
+```bash
+cd infra
+./deploy.sh --environment dev
+```
+
+This will automatically create:
+- Event Grid namespace with MQTT broker
+- Storage Account with blob container
+- Function App with consumption plan
+- Event Grid topic and subscription
+
+See [infra/README.md](infra/README.md) for detailed deployment instructions and customization options.
+
+#### 3. Configure Environment Variables
+
+After deployment, generate a SAS token:
+
+```bash
+# Get the namespace name from deployment outputs
+NAMESPACE_NAME=$(az eventgrid namespace list \
+  --resource-group acme-mqtt-dev-rg \
+  --query '[0].name' -o tsv)
+
+# Generate SAS token
+az eventgrid namespace client generate-sas-token \
+  --resource-group acme-mqtt-dev-rg \
+  --namespace-name $NAMESPACE_NAME \
+  --client-name mqtt_proxy \
+  --expiry-time-utc "2025-12-31T23:59:59Z"
+```
+
+Update your `.env` file with the generated values:
+
+```bash
+cp .env.example .env
+# Edit .env with your MQTT hostname and SAS token
+```
+
+#### 4. Deploy Azure Function
+
+```bash
+cd ../azure-function
+func azure functionapp publish <function-app-name>
+```
+
+#### 5. Start On-Premises Services
+
+```bash
+cd ..
+docker-compose up -d
+```
+
+### Option B: Manual Azure Resource Setup
 
 ### 1. Clone the Repository
 
@@ -212,6 +284,14 @@ acme-mqtt/
 │   └── EventGridTrigger/
 │       ├── function.json
 │       └── __init__.py
+├── infra/                    # Infrastructure as Code (IaC)
+│   ├── bicep/                # Bicep templates
+│   │   ├── main.bicep        # Main deployment template
+│   │   ├── parameters.*.json # Environment-specific parameters
+│   │   └── modules/          # Resource-specific modules
+│   ├── deploy.sh             # Deployment script
+│   ├── cleanup.sh            # Resource cleanup script
+│   └── README.md             # IaC documentation
 ├── test-data/                # Sample test data
 │   ├── sensor_data.json
 │   └── device_status.json
