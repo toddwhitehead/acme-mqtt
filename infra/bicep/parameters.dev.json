@@ -12,7 +12,7 @@
       "value": "australiaeast"
     },
     "mqttClientId": {
-      "value": "mqtt_proxy"
+      "value": "mqtt-proxy"
     },
     "deployEventGridSubscription": {
       "value": false

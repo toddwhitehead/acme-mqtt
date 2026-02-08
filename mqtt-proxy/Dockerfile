@@ -7,6 +7,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY mqtt_proxy.py .
+COPY mqtt-proxy.py .
 
-CMD ["python", "mqtt_proxy.py"]
+CMD ["python", "mqtt-proxy.py"]

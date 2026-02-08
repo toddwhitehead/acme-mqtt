@@ -29,7 +29,7 @@ EVENTGRID_MQTT_PORT = int(os.getenv('EVENTGRID_MQTT_PORT', 8883))
 EVENTGRID_MQTT_TOPIC = os.getenv('EVENTGRID_MQTT_TOPIC', 'sensor/data')
 
 # Authentication settings for Event Grid
-MQTT_CLIENT_ID = os.getenv('MQTT_CLIENT_ID', 'mqtt_proxy')
+MQTT_CLIENT_ID = os.getenv('MQTT_CLIENT_ID', 'mqtt-proxy')
 MQTT_USERNAME = os.getenv('MQTT_USERNAME', '')  # For SAS token auth
 MQTT_PASSWORD = os.getenv('MQTT_PASSWORD', '')  # SAS token
 MQTT_CERT_FILE = os.getenv('MQTT_CERT_FILE', '')  # Client certificate path
@@ -209,7 +209,7 @@ def main():
     init_eventgrid_mqtt_client()
     
     # Create local MQTT client
-    local_client = mqtt.Client(client_id="mqtt_proxy_subscriber")
+    local_client = mqtt.Client(client_id="mqtt-proxy_subscriber")
     local_client.on_connect = on_local_connect
     local_client.on_message = on_message
     local_client.on_disconnect = on_local_disconnect

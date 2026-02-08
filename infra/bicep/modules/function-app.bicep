@@ -1,4 +1,4 @@
-// Function App module
+// Function App module (Consumption tier - pay per execution, zero idle cost)
 @description('The name of the function app')
 param functionAppName string
 
@@ -15,32 +15,33 @@ param storageAccountName string
 @secure()
 param storageAccountConnectionString string
 
-@description('The App Service Plan SKU')
-param appServicePlanSku string = 'Y1'
-
-// Create App Service Plan (Consumption)
+// Create App Service Plan (Consumption - Y1 Dynamic, pay-per-execution)
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: '${functionAppName}-plan'
   location: location
   tags: tags
   sku: {
-    name: appServicePlanSku
+    name: 'Y1'
     tier: 'Dynamic'
   }
   properties: {
-    reserved: true // Required for Linux
+    reserved: true
   }
 }
 
-// Create Function App
+// Create Function App (Consumption)
 resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
   name: functionAppName
   location: location
   tags: tags
   kind: 'functionapp,linux'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: appServicePlan.id
     reserved: true
+    httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'PYTHON|3.11'
       appSettings: [
@@ -75,16 +76,11 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
       ]
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
-      pythonVersion: '3.11'
     }
-    httpsOnly: true
-  }
-  identity: {
-    type: 'SystemAssigned'
   }
 }
 
-// Grant Function App access to storage
+// Grant Function App Storage Blob Data Contributor role
 resource storageAccountRef 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
 }

@@ -29,7 +29,7 @@ param functionAppName string = '${projectName}-${environmentName}-func-${substri
 param eventGridTopicName string = '${projectName}-${environmentName}-topic-${substring(uniqueString(resourceGroup().name), 0, 4)}'
 
 @description('MQTT client ID for proxy')
-param mqttClientId string = 'mqtt_proxy'
+param mqttClientId string = 'mqtt-proxy'
 
 @description('Tags to apply to all resources')
 param tags object = {

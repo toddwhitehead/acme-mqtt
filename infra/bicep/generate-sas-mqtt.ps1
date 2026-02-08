@@ -3,7 +3,7 @@
 
 $resourceGroup = "sandpit-todd"
 $namespaceName = "acme-mqtt-dev-egns"
-$clientName = "mqtt_proxy"
+$clientName = "mqtt-proxy"
 $expiryUtc = "2026-12-31T23:59:59Z"
 
 # Get namespace keys via ARM REST API

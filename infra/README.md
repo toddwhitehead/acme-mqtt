@@ -74,7 +74,7 @@ NAMESPACE_NAME=$(az eventgrid namespace list \
 az eventgrid namespace client generate-sas-token \
   --resource-group acme-mqtt-dev-rg \
   --namespace-name $NAMESPACE_NAME \
-  --client-name mqtt_proxy \
+  --client-name mqtt-proxy \
   --expiry-time-utc "2025-12-31T23:59:59Z"
 ```
 
@@ -82,8 +82,8 @@ Update your `.env` file in the project root with the generated values:
 
 ```env
 EVENTGRID_MQTT_HOSTNAME=<your-namespace>.<region>.ts.eventgrid.azure.net
-MQTT_CLIENT_ID=mqtt_proxy
-MQTT_USERNAME=mqtt_proxy
+MQTT_CLIENT_ID=mqtt-proxy
+MQTT_USERNAME=mqtt-proxy
 MQTT_PASSWORD=<sas-token-from-above>
 ```
 
@@ -202,7 +202,7 @@ The main template orchestrates the deployment of all resources. It uses modular 
 - `storageAccountName` - Storage account name (must be globally unique)
 - `functionAppName` - Function app name
 - `eventGridTopicName` - Event Grid topic name
-- `mqttClientId` - MQTT client ID (default: mqtt_proxy)
+- `mqttClientId` - MQTT client ID (default: mqtt-proxy)
 
 **Outputs:**
 - `eventGridNamespaceName` - Name of the Event Grid namespace
@@ -270,7 +270,7 @@ Edit the appropriate parameters file to customize your deployment:
       "value": "westus2"
     },
     "mqttClientId": {
-      "value": "mqtt_proxy"
+      "value": "mqtt-proxy"
     }
   }
 }
@@ -308,7 +308,7 @@ az deployment group show \
 az eventgrid namespace client generate-sas-token \
   --resource-group acme-mqtt-dev-rg \
   --namespace-name <namespace-name> \
-  --client-name mqtt_proxy \
+  --client-name mqtt-proxy \
   --expiry-time-utc "2025-12-31T23:59:59Z"
 ```
 
@@ -384,7 +384,7 @@ Production costs will vary based on:
    az eventgrid namespace client show \
      --resource-group acme-mqtt-dev-rg \
      --namespace-name <namespace-name> \
-     --client-name mqtt_proxy
+     --client-name mqtt-proxy
    ```
 
 2. **Check SAS token expiration:**

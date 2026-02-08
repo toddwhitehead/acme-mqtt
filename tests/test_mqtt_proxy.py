@@ -7,10 +7,10 @@ import sys
 import os
 from datetime import datetime
 
-# Add parent directory to path to import mqtt_proxy
+# Add parent directory to path to import mqtt-proxy
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'mqtt-proxy'))
 
-from mqtt_proxy import augment_message
+from mqtt-proxy import augment_message
 
 
 def test_augment_json_message():

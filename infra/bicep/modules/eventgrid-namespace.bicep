@@ -34,7 +34,7 @@ resource eventGridNamespace 'Microsoft.EventGrid/namespaces@2024-06-01-preview' 
       }
       routingIdentityInfo: null
     }
-    isZoneRedundant: true
+    isZoneRedundant: false
     publicNetworkAccess: 'Enabled'
   }
   identity: {

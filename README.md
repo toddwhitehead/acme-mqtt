@@ -94,7 +94,7 @@ NAMESPACE_NAME=$(az eventgrid namespace list \
 az eventgrid namespace client generate-sas-token \
   --resource-group acme-mqtt-dev-rg \
   --namespace-name $NAMESPACE_NAME \
-  --client-name mqtt_proxy \
+  --client-name mqtt-proxy \
   --expiry-time-utc "2025-12-31T23:59:59Z"
 ```
 
@@ -144,8 +144,8 @@ az eventgrid namespace create \
 az eventgrid namespace client create \
   --resource-group <your-resource-group> \
   --namespace-name <your-namespace-name> \
-  --client-name mqtt_proxy \
-  --authentication-name mqtt_proxy \
+  --client-name mqtt-proxy \
+  --authentication-name mqtt-proxy \
   --state Enabled
 ```
 
@@ -159,7 +159,7 @@ Generate a SAS token for your proxy client:
 az eventgrid namespace client generate-sas-token \
   --resource-group <your-resource-group> \
   --namespace-name <your-namespace-name> \
-  --client-name mqtt_proxy \
+  --client-name mqtt-proxy \
   --expiry-time-utc "2025-12-31T23:59:59Z"
 ```
 
@@ -182,8 +182,8 @@ Edit `.env` and add your Azure Event Grid MQTT credentials:
 ```env
 # For SAS token authentication
 EVENTGRID_MQTT_HOSTNAME=<your-namespace>.<region>.ts.eventgrid.azure.net
-MQTT_CLIENT_ID=mqtt_proxy
-MQTT_USERNAME=mqtt_proxy
+MQTT_CLIENT_ID=mqtt-proxy
+MQTT_USERNAME=mqtt-proxy
 MQTT_PASSWORD=<your-sas-token>
 ```
 
@@ -277,7 +277,7 @@ acme-mqtt/
 ├── mqtt-proxy/               # Local MQTT to Event Grid MQTT bridge
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   └── mqtt_proxy.py
+│   └── mqtt-proxy.py
 ├── azure-function/           # Azure Function for blob storage
 │   ├── host.json
 │   ├── requirements.txt

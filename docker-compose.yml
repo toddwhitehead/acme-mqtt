@@ -44,7 +44,7 @@ services:
       - EVENTGRID_MQTT_PORT=${EVENTGRID_MQTT_PORT:-8883}
       - EVENTGRID_MQTT_TOPIC=${EVENTGRID_MQTT_TOPIC:-sensor/data}
       # Authentication settings (SAS token)
-      - MQTT_CLIENT_ID=${MQTT_CLIENT_ID:-mqtt_proxy}
+      - MQTT_CLIENT_ID=${MQTT_CLIENT_ID:-mqtt-proxy}
       - MQTT_USERNAME=${MQTT_USERNAME:-}
       - MQTT_PASSWORD=${MQTT_PASSWORD:-}
       # Certificate-based authentication (optional)
