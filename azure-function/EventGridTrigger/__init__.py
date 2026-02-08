@@ -8,6 +8,8 @@ import os
 from datetime import datetime, timezone
 import azure.functions as func
 from azure.storage.blob import BlobServiceClient
+from azure.core.exceptions import ResourceNotFoundError
+from azure.core import MatchConditions
 
 # Get blob storage connection string from environment
 BLOB_CONNECTION_STRING = os.getenv('AzureWebJobsStorage')
@@ -73,23 +75,31 @@ def main(event: func.EventGridEvent):
                 
                 # Read existing events or start with empty list
                 events_list = []
+                etag = None
                 try:
                     # Try to download existing blob
-                    blob_data_stream = blob_client.download_blob()
-                    existing_content = blob_data_stream.readall().decode('utf-8')
+                    blob_properties = blob_client.download_blob()
+                    existing_content = blob_properties.readall().decode('utf-8')
                     events_list = json.loads(existing_content)
+                    etag = blob_properties.properties.etag
                     logging.info(f"Loaded {len(events_list)} existing events from {blob_name}")
-                except Exception as e:
+                except ResourceNotFoundError:
                     # Blob doesn't exist yet, start with empty list
                     logging.info(f"No existing file found, creating new daily file: {blob_name}")
                 
                 # Append new event to the list
                 events_list.append(blob_data)
                 
-                # Upload updated list back to blob
+                # Upload updated list back to blob with ETag for concurrency control
+                # If etag is provided, upload will fail if the blob was modified by another process
+                upload_kwargs = {'overwrite': True}
+                if etag:
+                    upload_kwargs['etag'] = etag
+                    upload_kwargs['match_condition'] = MatchConditions.IfNotModified
+                
                 blob_client.upload_blob(
                     json.dumps(events_list, indent=2),
-                    overwrite=True
+                    **upload_kwargs
                 )
                 
                 logging.info(f"Successfully appended event to {blob_name}. Total events: {len(events_list)}")
