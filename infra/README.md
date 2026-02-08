@@ -99,6 +99,20 @@ MQTT_PASSWORD=SharedAccessSignature sr=...
 
 ### 5. Deploy the Azure Function
 
+Ensure `azure-function/local.settings.json` exists (it is gitignored by default):
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true"
+  }
+}
+```
+
+Then publish:
+
 **Bash / PowerShell:**
 ```bash
 cd azure-function
