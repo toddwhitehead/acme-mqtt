@@ -1,0 +1,23 @@
+[
+  {
+    "sensor_id": "temp_sensor_01",
+    "type": "temperature",
+    "value": 22.5,
+    "unit": "celsius",
+    "location": "warehouse_a"
+  },
+  {
+    "sensor_id": "humidity_sensor_01",
+    "type": "humidity",
+    "value": 65.2,
+    "unit": "percent",
+    "location": "warehouse_a"
+  },
+  {
+    "sensor_id": "temp_sensor_02",
+    "type": "temperature",
+    "value": 18.3,
+    "unit": "celsius",
+    "location": "warehouse_b"
+  }
+]
