@@ -24,7 +24,7 @@ services:
       - TEST_DATA_DIR=/app/test-data
       - PUBLISH_INTERVAL=${PUBLISH_INTERVAL:-5}
     volumes:
-      - ./test-data:/app/test-data:ro
+      - ./test-data/bird-events:/app/test-data:ro
     depends_on:
       - mqtt-broker
     networks:

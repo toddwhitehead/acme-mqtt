@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_028_20260209_154510",
+  "timestamp": "2026-02-09T15:45:10.268+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Sulphur-crested Cockatoo",
+    "common_name": "Cockatoo",
+    "scientific_name": "Cacatua galerita",
+    "confidence": 0.96,
+    "bounding_box": {
+      "x_min": 100,
+      "y_min": 200,
+      "x_max": 330,
+      "y_max": 420,
+      "width": 230,
+      "height": 220
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 30.2,
+    "humidity_percent": 53,
+    "light_level": "afternoon",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

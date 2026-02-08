@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_017_20260209_082518",
+  "timestamp": "2026-02-09T08:25:18.739+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Magpie-lark",
+    "common_name": "Peewee",
+    "scientific_name": "Grallina cyanoleuca",
+    "confidence": 0.86,
+    "bounding_box": {
+      "x_min": 1450,
+      "y_min": 780,
+      "x_max": 1590,
+      "y_max": 910,
+      "width": 140,
+      "height": 130
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 27.0,
+    "humidity_percent": 61,
+    "light_level": "morning",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_019_20260209_091520",
+  "timestamp": "2026-02-09T09:15:20.065+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Pied Currawong",
+    "common_name": "Currawong",
+    "scientific_name": "Strepera graculina",
+    "confidence": 0.68,
+    "bounding_box": {
+      "x_min": 1050,
+      "y_min": 180,
+      "x_max": 1260,
+      "y_max": 380,
+      "width": 210,
+      "height": 200
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 28.2,
+    "humidity_percent": 58,
+    "light_level": "morning",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

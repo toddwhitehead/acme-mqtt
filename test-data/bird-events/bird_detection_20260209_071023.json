@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_014_20260209_071023",
+  "timestamp": "2026-02-09T07:10:23.194+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Noisy Miner",
+    "common_name": "Miner",
+    "scientific_name": "Manorina melanocephala",
+    "confidence": 0.63,
+    "bounding_box": {
+      "x_min": 1340,
+      "y_min": 310,
+      "x_max": 1470,
+      "y_max": 440,
+      "width": 130,
+      "height": 130
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 25.1,
+    "humidity_percent": 67,
+    "light_level": "morning",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

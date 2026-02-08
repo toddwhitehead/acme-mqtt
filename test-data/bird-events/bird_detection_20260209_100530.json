@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_021_20260209_100530",
+  "timestamp": "2026-02-09T10:05:30.917+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Caspian Tern",
+    "common_name": "Tern",
+    "scientific_name": "Hydroprogne caspia",
+    "confidence": 0.55,
+    "bounding_box": {
+      "x_min": 1500,
+      "y_min": 60,
+      "x_max": 1680,
+      "y_max": 170,
+      "width": 180,
+      "height": 110
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 29.4,
+    "humidity_percent": 55,
+    "light_level": "midday",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

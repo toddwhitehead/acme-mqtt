@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 MQTT_BROKER = os.getenv('MQTT_BROKER', 'mqtt-broker')
 MQTT_PORT = int(os.getenv('MQTT_PORT', 1883))
 MQTT_TOPIC = os.getenv('MQTT_TOPIC', 'sensor/data')
-TEST_DATA_DIR = os.getenv('TEST_DATA_DIR', '/app/test-data')
+TEST_DATA_DIR = os.getenv('TEST_DATA_DIR', '/app/test-data')  # bird-events mounted here
 PUBLISH_INTERVAL = int(os.getenv('PUBLISH_INTERVAL', 5))  # seconds
 
 

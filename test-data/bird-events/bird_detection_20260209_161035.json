@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_029_20260209_161035",
+  "timestamp": "2026-02-09T16:10:35.614+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Common Bronzewing",
+    "common_name": "Bronzewing",
+    "scientific_name": "Phaps chalcoptera",
+    "confidence": 0.90,
+    "bounding_box": {
+      "x_min": 650,
+      "y_min": 750,
+      "x_max": 830,
+      "y_max": 920,
+      "width": 180,
+      "height": 170
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 29.6,
+    "humidity_percent": 55,
+    "light_level": "afternoon",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

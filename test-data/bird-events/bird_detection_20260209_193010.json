@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_033_20260209_193010",
+  "timestamp": "2026-02-09T19:30:10.729+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Bush Thick-knee",
+    "common_name": "Curlew",
+    "scientific_name": "Burhinus grallarius",
+    "confidence": 0.85,
+    "bounding_box": {
+      "x_min": 1100,
+      "y_min": 650,
+      "x_max": 1340,
+      "y_max": 900,
+      "width": 240,
+      "height": 250
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 25.4,
+    "humidity_percent": 69,
+    "light_level": "evening",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_020_20260209_094108",
+  "timestamp": "2026-02-09T09:41:08.483+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Brown Goshawk",
+    "common_name": "Goshawk",
+    "scientific_name": "Accipiter fasciatus",
+    "confidence": 0.67,
+    "bounding_box": {
+      "x_min": 680,
+      "y_min": 50,
+      "x_max": 910,
+      "y_max": 230,
+      "width": 230,
+      "height": 180
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 28.8,
+    "humidity_percent": 56,
+    "light_level": "morning",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

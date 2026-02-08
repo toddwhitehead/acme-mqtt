@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_016_20260209_080015",
+  "timestamp": "2026-02-09T08:00:15.412+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Torresian Crow",
+    "common_name": "Crow",
+    "scientific_name": "Corvus orru",
+    "confidence": 0.72,
+    "bounding_box": {
+      "x_min": 890,
+      "y_min": 420,
+      "x_max": 1100,
+      "y_max": 620,
+      "width": 210,
+      "height": 200
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 26.4,
+    "humidity_percent": 63,
+    "light_level": "morning",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

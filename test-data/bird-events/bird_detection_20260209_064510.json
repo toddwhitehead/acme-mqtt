@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_013_20260209_064510",
+  "timestamp": "2026-02-09T06:45:10.556+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Grey Butcherbird",
+    "common_name": "Butcherbird",
+    "scientific_name": "Cracticus torquatus",
+    "confidence": 0.78,
+    "bounding_box": {
+      "x_min": 720,
+      "y_min": 220,
+      "x_max": 860,
+      "y_max": 370,
+      "width": 140,
+      "height": 150
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 24.2,
+    "humidity_percent": 70,
+    "light_level": "dawn",
+    "weather": "partly_cloudy"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

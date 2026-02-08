@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_011_20260209_060512",
+  "timestamp": "2026-02-09T06:05:12.672+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Rainbow Lorikeet",
+    "common_name": "Lorikeet",
+    "scientific_name": "Trichoglossus moluccanus",
+    "confidence": 0.52,
+    "bounding_box": {
+      "x_min": 480,
+      "y_min": 95,
+      "x_max": 600,
+      "y_max": 210,
+      "width": 120,
+      "height": 115
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 23.4,
+    "humidity_percent": 74,
+    "light_level": "dawn",
+    "weather": "partly_cloudy"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

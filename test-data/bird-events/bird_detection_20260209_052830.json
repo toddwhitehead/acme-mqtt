@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_010_20260209_052830",
+  "timestamp": "2026-02-09T05:28:30.445+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Pacific Koel",
+    "common_name": "Koel",
+    "scientific_name": "Eudynamys orientalis",
+    "confidence": 0.71,
+    "bounding_box": {
+      "x_min": 1120,
+      "y_min": 140,
+      "x_max": 1310,
+      "y_max": 290,
+      "width": 190,
+      "height": 150
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 22.8,
+    "humidity_percent": 76,
+    "light_level": "pre-dawn",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}

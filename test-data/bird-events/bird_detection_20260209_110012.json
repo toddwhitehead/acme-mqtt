@@ -1,0 +1,45 @@
+{
+  "event_id": "evt_023_20260209_110012",
+  "timestamp": "2026-02-09T11:00:12.624+10:00",
+  "camera_id": "backyard_cam_01",
+  "location": {
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "coordinates": {
+      "latitude": -27.4698,
+      "longitude": 153.0251
+    },
+    "zone": "backyard"
+  },
+  "detection": {
+    "object_type": "bird",
+    "species": "Channel-billed Cuckoo",
+    "common_name": "Cuckoo",
+    "scientific_name": "Scythrops novaehollandiae",
+    "confidence": 0.73,
+    "bounding_box": {
+      "x_min": 760,
+      "y_min": 30,
+      "x_max": 1020,
+      "y_max": 250,
+      "width": 260,
+      "height": 220
+    },
+    "image_dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "environmental_data": {
+    "temperature_celsius": 30.5,
+    "humidity_percent": 52,
+    "light_level": "midday",
+    "weather": "clear"
+  },
+  "ai_model": {
+    "name": "bird_classifier_v2.1",
+    "version": "2.1.0",
+    "provider": "acme-ai"
+  }
+}
