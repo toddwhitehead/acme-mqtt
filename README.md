@@ -1,6 +1,6 @@
-# ACME MQTT - Azure Event Grid Integration
+# ACME MQTT - Azure Event Grid MQTT Integration
 
-A Docker-based MQTT solution that reads messages from an on-premises MQTT broker, augments the data with timestamps, and forwards it to Azure Event Grid. The cloud component receives Event Grid messages and stores them in Azure Blob Storage.
+A Docker-based MQTT solution that bridges on-premises MQTT infrastructure with Azure Event Grid's MQTT broker. Messages from local devices flow through a local MQTT broker, get augmented with metadata by a proxy, and are forwarded to Azure Event Grid's MQTT broker for cloud processing.
 
 ## Architecture
 
@@ -9,33 +9,41 @@ A Docker-based MQTT solution that reads messages from an on-premises MQTT broker
 1. **MQTT Broker** (`mqtt-broker/`)
    - Eclipse Mosquitto MQTT broker
    - Listens on port 1883
-   - Handles message queuing and delivery
+   - Handles local message queuing and delivery
 
 2. **Test Client** (`mqtt-test-client/`)
    - Publishes test messages from JSON data files
    - Simulates IoT devices sending sensor data
+   - Connects to local MQTT broker
    - Configurable publish interval
 
 3. **MQTT Proxy** (`mqtt-proxy/`)
-   - Subscribes to MQTT broker
+   - Subscribes to local MQTT broker
    - Augments messages with:
      - UTC timestamp
      - Processing metadata
      - Source information
-   - Forwards to Azure Event Grid MQTT endpoint
+   - Forwards to Azure Event Grid MQTT broker (port 8883)
+   - Supports SAS token or certificate-based authentication
 
 ### Cloud Components
 
-4. **Azure Function** (`azure-function/`)
+4. **Azure Event Grid MQTT Broker**
+   - Built-in MQTT 3.1.1 and 5.0 support
+   - Handles client authentication and authorization
+   - Routes MQTT messages to Event Grid topics
+   - Provides scalable, managed MQTT infrastructure
+
+5. **Azure Function** (`azure-function/`)
    - Event Grid trigger function
-   - Receives messages from Event Grid
+   - Receives messages from Event Grid topics
    - Stores data in Azure Blob Storage
 
 ## Prerequisites
 
 - Docker and Docker Compose
-- Azure subscription (for cloud deployment)
-- Azure Event Grid Topic with MQTT support
+- Azure subscription
+- Azure Event Grid namespace with MQTT enabled
 - Azure Storage Account
 - Azure Function App
 
@@ -48,7 +56,48 @@ git clone https://github.com/toddwhitehead/acme-mqtt.git
 cd acme-mqtt
 ```
 
-### 2. Configure Azure Credentials
+### 2. Set Up Azure Event Grid MQTT Namespace
+
+Create an Event Grid namespace with MQTT broker enabled:
+
+```bash
+# Create Event Grid namespace with MQTT support
+az eventgrid namespace create \
+  --resource-group <your-resource-group> \
+  --name <your-namespace-name> \
+  --location <region> \
+  --topic-spaces-configuration "{state:Enabled}"
+
+# Register MQTT client for the proxy
+az eventgrid namespace client create \
+  --resource-group <your-resource-group> \
+  --namespace-name <your-namespace-name> \
+  --client-name mqtt_proxy \
+  --authentication-name mqtt_proxy \
+  --state Enabled
+```
+
+### 3. Configure Authentication
+
+#### Option A: SAS Token Authentication
+
+Generate a SAS token for your proxy client:
+
+```bash
+az eventgrid namespace client generate-sas-token \
+  --resource-group <your-resource-group> \
+  --namespace-name <your-namespace-name> \
+  --client-name mqtt_proxy \
+  --expiry-time-utc "2025-12-31T23:59:59Z"
+```
+
+#### Option B: Certificate-based Authentication
+
+1. Generate client certificates or use existing ones
+2. Upload certificates to Event Grid namespace
+3. Place certificates in `./certs` directory
+
+### 4. Configure Environment Variables
 
 Copy the example environment file and fill in your Azure credentials:
 
@@ -56,26 +105,50 @@ Copy the example environment file and fill in your Azure credentials:
 cp .env.example .env
 ```
 
-Edit `.env` and add your Azure Event Grid credentials:
+Edit `.env` and add your Azure Event Grid MQTT credentials:
 
 ```env
-EVENTGRID_ENDPOINT=https://<your-eventgrid-topic>.eventgrid.azure.net/api/events
-EVENTGRID_KEY=<your-eventgrid-access-key>
-EVENTGRID_TOPIC_HOSTNAME=<your-eventgrid-topic>.eventgrid.azure.net
+# For SAS token authentication
+EVENTGRID_MQTT_HOSTNAME=<your-namespace>.<region>.ts.eventgrid.azure.net
+MQTT_CLIENT_ID=mqtt_proxy
+MQTT_USERNAME=mqtt_proxy
+MQTT_PASSWORD=<your-sas-token>
 ```
 
-### 3. Start On-Premises Components
+### 5. Configure Event Grid Routing
+
+Create routing rules to forward MQTT messages to Event Grid topics:
+
+```bash
+# Create a topic space
+az eventgrid namespace topic-space create \
+  --resource-group <your-resource-group> \
+  --namespace-name <your-namespace-name> \
+  --name sensor-data \
+  --topic-templates "sensor/#"
+
+# Create an Event Grid topic for the Azure Function
+az eventgrid topic create \
+  --resource-group <your-resource-group> \
+  --name mqtt-events \
+  --location <region>
+
+# Create routing configuration (Event Grid namespace -> Topic)
+# This is configured through the Azure Portal or ARM templates
+```
+
+### 6. Start On-Premises Components
 
 ```bash
 docker-compose up -d
 ```
 
 This will start:
-- MQTT broker on port 1883
-- Test client publishing messages every 5 seconds
-- Proxy forwarding messages to Azure Event Grid
+- Local MQTT broker on port 1883
+- Test client publishing messages every 5 seconds to local broker
+- Proxy forwarding messages from local broker to Azure Event Grid MQTT broker
 
-### 4. View Logs
+### 7. View Logs
 
 ```bash
 # View all logs
@@ -87,7 +160,7 @@ docker-compose logs -f mqtt-test-client
 docker-compose logs -f mqtt-proxy
 ```
 
-### 5. Deploy Azure Function
+### 8. Deploy Azure Function
 
 ```bash
 cd azure-function
@@ -106,14 +179,14 @@ az functionapp create \
 func azure functionapp publish <your-function-app-name>
 ```
 
-### 6. Configure Event Grid Subscription
+### 9. Configure Event Grid Subscription
 
 Create an Event Grid subscription that triggers your Azure Function:
 
 ```bash
 az eventgrid event-subscription create \
   --name mqtt-data-subscription \
-  --source-resource-id /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.EventGrid/topics/<topic-name> \
+  --source-resource-id /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.EventGrid/topics/mqtt-events \
   --endpoint-type azurefunction \
   --endpoint /subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.Web/sites/<function-app-name>/functions/EventGridTrigger
 ```
@@ -122,14 +195,14 @@ az eventgrid event-subscription create \
 
 ```
 acme-mqtt/
-├── mqtt-broker/              # MQTT broker (Mosquitto)
+├── mqtt-broker/              # Local MQTT broker (Mosquitto)
 │   ├── Dockerfile
 │   └── mosquitto.conf
 ├── mqtt-test-client/         # Test message publisher
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── test_client.py
-├── mqtt-proxy/               # MQTT to Event Grid proxy
+├── mqtt-proxy/               # Local MQTT to Event Grid MQTT bridge
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── mqtt_proxy.py
@@ -142,6 +215,8 @@ acme-mqtt/
 ├── test-data/                # Sample test data
 │   ├── sensor_data.json
 │   └── device_status.json
+├── certs/                    # Client certificates (for cert auth)
+│   └── .gitkeep
 ├── docker-compose.yml        # Docker Compose configuration
 ├── .env.example              # Example environment variables
 └── README.md
@@ -153,20 +228,33 @@ acme-mqtt/
 
 #### MQTT Test Client
 
-- `MQTT_BROKER`: MQTT broker hostname (default: `mqtt-broker`)
-- `MQTT_PORT`: MQTT broker port (default: `1883`)
+- `MQTT_BROKER`: Local MQTT broker hostname (default: `mqtt-broker`)
+- `MQTT_PORT`: Local MQTT broker port (default: `1883`)
 - `MQTT_TOPIC`: Topic to publish to (default: `sensor/data`)
 - `TEST_DATA_DIR`: Directory containing test data files (default: `/app/test-data`)
 - `PUBLISH_INTERVAL`: Seconds between messages (default: `5`)
 
 #### MQTT Proxy
 
-- `MQTT_BROKER`: MQTT broker hostname (default: `mqtt-broker`)
-- `MQTT_PORT`: MQTT broker port (default: `1883`)
-- `MQTT_TOPIC`: Topic to subscribe to (default: `sensor/data`)
-- `EVENTGRID_ENDPOINT`: Azure Event Grid endpoint URL
-- `EVENTGRID_KEY`: Azure Event Grid access key
-- `EVENTGRID_TOPIC_HOSTNAME`: Azure Event Grid topic hostname
+Local MQTT broker settings:
+- `LOCAL_MQTT_BROKER`: Local MQTT broker hostname (default: `mqtt-broker`)
+- `LOCAL_MQTT_PORT`: Local MQTT broker port (default: `1883`)
+- `LOCAL_MQTT_TOPIC`: Topic to subscribe to (default: `sensor/data`)
+
+Azure Event Grid MQTT settings (required):
+- `EVENTGRID_MQTT_HOSTNAME`: Azure Event Grid MQTT namespace hostname
+- `EVENTGRID_MQTT_PORT`: MQTT port (default: `8883`)
+- `EVENTGRID_MQTT_TOPIC`: Topic to publish to on Event Grid (default: `sensor/data`)
+- `MQTT_CLIENT_ID`: Client identifier (must be registered in Event Grid)
+
+Authentication (choose one):
+- SAS Token:
+  - `MQTT_USERNAME`: Client username
+  - `MQTT_PASSWORD`: SAS token
+- Certificate:
+  - `MQTT_CERT_FILE`: Client certificate path
+  - `MQTT_KEY_FILE`: Client key path
+  - `MQTT_CA_CERTS`: CA certificate path (optional)
 
 #### Azure Function
 
@@ -192,10 +280,10 @@ Example format:
 
 ## Message Flow
 
-1. **Test Client** reads JSON files from `test-data/` and publishes to MQTT broker
-2. **MQTT Broker** receives and queues messages
-3. **MQTT Proxy** subscribes to broker, receives messages
-4. **Proxy** augments messages with:
+1. **Test Client** reads JSON files from `test-data/` and publishes to local MQTT broker
+2. **Local MQTT Broker** receives and queues messages
+3. **MQTT Proxy** subscribes to local broker, receives messages
+4. **Proxy** augments messages with metadata:
    ```json
    {
      "original_data": { ... },
@@ -204,18 +292,19 @@ Example format:
      "source": "on-premises-mqtt"
    }
    ```
-5. **Proxy** sends augmented message to Azure Event Grid
-6. **Azure Function** is triggered by Event Grid
-7. **Function** stores message in Azure Blob Storage with metadata
+5. **Proxy** publishes augmented message to Azure Event Grid MQTT broker (port 8883 with TLS)
+6. **Event Grid MQTT Broker** authenticates and routes messages to Event Grid topics
+7. **Azure Function** is triggered by Event Grid topic
+8. **Function** stores message in Azure Blob Storage with metadata
 
 ## Development
 
-### Local Testing (Without Azure)
+### Local Testing
 
-The system can run in test mode without Azure credentials. The proxy will log messages instead of sending to Event Grid:
+The MQTT proxy requires Azure Event Grid MQTT namespace credentials. Without credentials, the proxy runs in test mode and logs messages instead of forwarding:
 
 ```bash
-# Start without Azure credentials
+# Start without Azure credentials (test mode)
 docker-compose up -d
 
 # View proxy logs to see augmented messages
@@ -240,7 +329,7 @@ docker-compose up -d
 
 ## Troubleshooting
 
-### MQTT Broker Connection Issues
+### Local MQTT Broker Connection Issues
 
 ```bash
 # Check if broker is running
@@ -250,11 +339,13 @@ docker-compose ps mqtt-broker
 docker run -it --rm --network acme-mqtt_mqtt-network eclipse-mosquitto mosquitto_sub -h mqtt-broker -t "sensor/data" -v
 ```
 
-### Event Grid Issues
+### Event Grid MQTT Issues
 
-- Verify Event Grid endpoint and key are correct
+- Verify Event Grid MQTT hostname and credentials are correct
 - Check proxy logs for error messages
-- Ensure Event Grid topic is configured for CloudEvents schema
+- Ensure MQTT client is registered in Event Grid namespace
+- Verify TLS/SSL certificates are valid (if using certificate auth)
+- Check that SAS token hasn't expired (if using SAS auth)
 
 ### Azure Function Issues
 
