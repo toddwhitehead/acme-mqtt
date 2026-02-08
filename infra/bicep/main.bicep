@@ -16,17 +16,17 @@ param environmentName string = 'dev'
 param projectName string = 'acme-mqtt'
 
 @description('Event Grid namespace name')
-param eventGridNamespaceName string = '${projectName}-${environmentName}-egns'
+param eventGridNamespaceName string = '${projectName}-${environmentName}-egns-${substring(uniqueString(resourceGroup().name), 0, 4)}'
 
 @description('Storage account name (must be globally unique)')
 @maxLength(24)
-param storageAccountName string = toLower(replace('${projectName}${environmentName}sa', '-', ''))
+param storageAccountName string = toLower(replace('${projectName}${environmentName}${substring(uniqueString(resourceGroup().name), 0, 4)}sa', '-', ''))
 
 @description('Function app name')
-param functionAppName string = '${projectName}-${environmentName}-func'
+param functionAppName string = '${projectName}-${environmentName}-func-${substring(uniqueString(resourceGroup().name), 0, 4)}'
 
 @description('Event Grid topic name')
-param eventGridTopicName string = '${projectName}-${environmentName}-topic'
+param eventGridTopicName string = '${projectName}-${environmentName}-topic-${substring(uniqueString(resourceGroup().name), 0, 4)}'
 
 @description('MQTT client ID for proxy')
 param mqttClientId string = 'mqtt_proxy'
@@ -81,8 +81,11 @@ module eventGridTopic 'modules/eventgrid-topic.bicep' = {
   }
 }
 
-// Deploy Event Grid Subscription
-module eventGridSubscription 'modules/eventgrid-subscription.bicep' = {
+@description('Whether to deploy Event Grid subscription (set to false if function code not yet deployed)')
+param deployEventGridSubscription bool = false
+
+// Deploy Event Grid Subscription (conditionally deployed after function app is ready)
+module eventGridSubscription 'modules/eventgrid-subscription.bicep' = if (deployEventGridSubscription) {
   name: 'eventGridSubscription-deployment'
   params: {
     subscriptionName: '${projectName}-${environmentName}-subscription'
@@ -90,6 +93,10 @@ module eventGridSubscription 'modules/eventgrid-subscription.bicep' = {
     functionAppName: functionApp.outputs.functionAppName
     functionName: 'EventGridTrigger'
   }
+  dependsOn: [
+    functionApp
+    eventGridTopic
+  ]
 }
 
 // Outputs
@@ -99,4 +106,5 @@ output storageAccountName string = storageAccount.outputs.storageAccountName
 output functionAppName string = functionApp.outputs.functionAppName
 output eventGridTopicName string = eventGridTopic.outputs.topicName
 output eventGridTopicEndpoint string = eventGridTopic.outputs.endpoint
+output eventGridSubscriptionName string = deployEventGridSubscription ? eventGridSubscription.outputs.subscriptionName : 'Not deployed'
 output resourceGroupName string = resourceGroup().name

@@ -34,7 +34,7 @@ resource eventGridNamespace 'Microsoft.EventGrid/namespaces@2024-06-01-preview' 
       }
       routingIdentityInfo: null
     }
-    isZoneRedundant: false
+    isZoneRedundant: true
     publicNetworkAccess: 'Enabled'
   }
   identity: {
@@ -50,6 +50,9 @@ resource mqttClient 'Microsoft.EventGrid/namespaces/clients@2024-06-01-preview' 
     state: 'Enabled'
     authenticationName: mqttClientId
     description: 'MQTT proxy client for on-premises bridge'
+    clientCertificateAuthentication: {
+      validationScheme: 'SubjectMatchesAuthenticationName'
+    }
     attributes: {}
   }
 }
@@ -69,7 +72,7 @@ resource topicSpace 'Microsoft.EventGrid/namespaces/topicSpaces@2024-06-01-previ
 // Create permission binding for publish
 resource publisherPermissionBinding 'Microsoft.EventGrid/namespaces/permissionBindings@2024-06-01-preview' = {
   parent: eventGridNamespace
-  name: '${mqttClientId}-publisher'
+  name: '${replace(mqttClientId, '_', '-')}-publisher'
   properties: {
     clientGroupName: '$all'
     permission: 'Publisher'
@@ -84,7 +87,7 @@ resource publisherPermissionBinding 'Microsoft.EventGrid/namespaces/permissionBi
 // Create permission binding for subscribe
 resource subscriberPermissionBinding 'Microsoft.EventGrid/namespaces/permissionBindings@2024-06-01-preview' = {
   parent: eventGridNamespace
-  name: '${mqttClientId}-subscriber'
+  name: '${replace(mqttClientId, '_', '-')}-subscriber'
   properties: {
     clientGroupName: '$all'
     permission: 'Subscriber'

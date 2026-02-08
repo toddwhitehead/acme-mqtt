@@ -13,6 +13,9 @@
     },
     "mqttClientId": {
       "value": "mqtt_proxy"
+    },
+    "deployEventGridSubscription": {
+      "value": false
     }
   }
 }
