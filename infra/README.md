@@ -250,7 +250,7 @@ Orchestrates deployment of all modules.
 
 | Resource | Estimated Monthly Cost (Dev) |
 |---|---|
-| Event Grid Namespace (Standard, 1 CU, no zone redundancy) | ~$10–20 |
+| Event Grid Namespace (Standard, 1 CU, zone redundant) | ~$10–20 |
 | Storage Account (Standard LRS) | ~$1–5 |
 | Function App (Consumption — pay per execution) | ~$0–5 (first 1M free) |
 | Event Grid Topic (Basic) | ~$0–5 |
@@ -258,7 +258,6 @@ Orchestrates deployment of all modules.
 
 Cost-saving measures applied:
 - Consumption plan (Y1) — zero cost when idle
-- Zone redundancy disabled on Event Grid namespace
 - Standard LRS storage (cheapest replication)
 - Basic tier Event Grid topic
 

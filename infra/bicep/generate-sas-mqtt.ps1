@@ -2,7 +2,7 @@
 # Uses namespace shared access keys via REST API (az cli eventgrid extension has a pip install bug)
 
 $resourceGroup = "sandpit-todd"
-$namespaceName = "acme-mqtt-dev-egns"
+$namespaceName = "acme-mqtt-dev-egns-zie5"
 $clientName = "mqtt-proxy"
 $expiryUtc = "2026-12-31T23:59:59Z"
 
