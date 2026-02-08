@@ -22,7 +22,7 @@ services:
       - MQTT_PORT=1883
       - MQTT_TOPIC=sensor/data
       - TEST_DATA_DIR=/app/test-data
-      - PUBLISH_INTERVAL=5
+      - PUBLISH_INTERVAL=${PUBLISH_INTERVAL:-5}
     volumes:
       - ./test-data:/app/test-data:ro
     depends_on:
@@ -35,13 +35,25 @@ services:
     build: ./mqtt-proxy
     container_name: mqtt-proxy
     environment:
-      - MQTT_BROKER=mqtt-broker
-      - MQTT_PORT=1883
-      - MQTT_TOPIC=sensor/data
-      # Azure Event Grid configuration (set these values)
-      - EVENTGRID_ENDPOINT=${EVENTGRID_ENDPOINT:-}
-      - EVENTGRID_KEY=${EVENTGRID_KEY:-}
-      - EVENTGRID_TOPIC_HOSTNAME=${EVENTGRID_TOPIC_HOSTNAME:-}
+      # Local MQTT broker configuration
+      - LOCAL_MQTT_BROKER=mqtt-broker
+      - LOCAL_MQTT_PORT=1883
+      - LOCAL_MQTT_TOPIC=sensor/data
+      # Azure Event Grid MQTT Broker configuration
+      - EVENTGRID_MQTT_HOSTNAME=${EVENTGRID_MQTT_HOSTNAME:-}
+      - EVENTGRID_MQTT_PORT=${EVENTGRID_MQTT_PORT:-8883}
+      - EVENTGRID_MQTT_TOPIC=${EVENTGRID_MQTT_TOPIC:-sensor/data}
+      # Authentication settings (SAS token)
+      - MQTT_CLIENT_ID=${MQTT_CLIENT_ID:-mqtt_proxy}
+      - MQTT_USERNAME=${MQTT_USERNAME:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+      # Certificate-based authentication (optional)
+      - MQTT_CERT_FILE=${MQTT_CERT_FILE:-}
+      - MQTT_KEY_FILE=${MQTT_KEY_FILE:-}
+      - MQTT_CA_CERTS=${MQTT_CA_CERTS:-}
+    volumes:
+      # Mount certificates directory if using certificate auth
+      - ${CERTS_DIR:-./certs}:/app/certs:ro
     depends_on:
       - mqtt-broker
     networks:
