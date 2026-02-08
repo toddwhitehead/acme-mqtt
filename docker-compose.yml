@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  mqtt-broker:
+    build: ./mqtt-broker
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+    volumes:
+      - mqtt-data:/mosquitto/data
+    networks:
+      - mqtt-network
+    restart: unless-stopped
+
+  mqtt-test-client:
+    build: 
+      context: .
+      dockerfile: ./mqtt-test-client/Dockerfile
+    container_name: mqtt-test-client
+    environment:
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=sensor/data
+      - TEST_DATA_DIR=/app/test-data
+      - PUBLISH_INTERVAL=5
+    volumes:
+      - ./test-data:/app/test-data:ro
+    depends_on:
+      - mqtt-broker
+    networks:
+      - mqtt-network
+    restart: unless-stopped
+
+  mqtt-proxy:
+    build: ./mqtt-proxy
+    container_name: mqtt-proxy
+    environment:
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=sensor/data
+      # Azure Event Grid configuration (set these values)
+      - EVENTGRID_ENDPOINT=${EVENTGRID_ENDPOINT:-}
+      - EVENTGRID_KEY=${EVENTGRID_KEY:-}
+      - EVENTGRID_TOPIC_HOSTNAME=${EVENTGRID_TOPIC_HOSTNAME:-}
+    depends_on:
+      - mqtt-broker
+    networks:
+      - mqtt-network
+    restart: unless-stopped
+
+volumes:
+  mqtt-data:
+
+networks:
+  mqtt-network:
+    driver: bridge

@@ -1,0 +1,20 @@
+[
+  {
+    "device_id": "device_101",
+    "status": "active",
+    "battery_level": 87,
+    "signal_strength": -45
+  },
+  {
+    "device_id": "device_102",
+    "status": "active",
+    "battery_level": 92,
+    "signal_strength": -38
+  },
+  {
+    "device_id": "device_103",
+    "status": "maintenance",
+    "battery_level": 15,
+    "signal_strength": -62
+  }
+]
