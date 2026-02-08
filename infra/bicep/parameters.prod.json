@@ -9,7 +9,7 @@
       "value": "acme-mqtt"
     },
     "location": {
-      "value": "westus2"
+      "value": "australiaeast"
     },
     "mqttClientId": {
       "value": "mqtt_proxy"
